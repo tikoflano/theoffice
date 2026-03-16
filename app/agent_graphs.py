@@ -19,13 +19,21 @@ def run_graph(action: str, state: ChatState) -> ChatState:
     """
     Entry point for running a chat interaction.
 
-    For now, this only implements a very simple direct-chat behavior and ignores
-    multi-agent / delegation logic. It exists so that the unified /chat endpoint
-    can call into a stable API while we evolve the graphs.
+    Currently supports:
+    - direct 1:1 chats (action == "message" and a single participant)
+    - delegated flows (action == "delegate" and 'michael' is a participant)
+    - meeting-style multi-agent flows (action == "meeting" and 'michael' plus workers)
     """
     participants: List[str] = state.get("participants") or []
+
     if action == "message" and len(participants) == 1:
         return _direct_chat_graph(state)
+
+    if action == "delegate" and "michael" in participants:
+        return _delegate_graph(state)
+
+    if action == "meeting" and "michael" in participants and len(participants) > 1:
+        return _meeting_graph(state)
 
     # Fallback: echo-style behavior from the first participant
     _ensure_outputs(state)
@@ -83,5 +91,122 @@ def _direct_chat_graph(state: ChatState) -> ChatState:
     history.append(AIMessage(content=reply_text, additional_kwargs={"agent": agent_id}))
     state["history"] = history
     state["outputs"].append({"agent": agent_id, "content": reply_text})
+    return state
+
+
+def _delegate_graph(state: ChatState) -> ChatState:
+    """
+    Simple delegated-flow graph.
+
+    For now, this lets Michael respond and optionally call a single worker if the
+    participants list includes exactly one non-Michael worker. This is a stepping
+    stone toward richer multi-step delegation.
+    """
+    _ensure_outputs(state)
+    participants: List[str] = state.get("participants") or []
+    history: List[BaseMessage] = state.get("history", [])
+
+    # Michael plans / responds first
+    manager = get_worker("michael")
+    michael_system = manager["system_prompt"] if manager else ""
+    michael_personality = (manager or {}).get("personality_prompt", "")
+    is_first_reply = not any(
+        isinstance(m, AIMessage) and m.additional_kwargs.get("agent") == "michael"
+        for m in history
+    )
+    michael_result = michael_chat(
+        history,
+        michael_system,
+        michael_personality,
+        is_first_reply,
+    )
+    michael_reply = michael_result["message"]
+    history.append(
+        AIMessage(content=michael_reply, additional_kwargs={"agent": "michael"})
+    )
+    state["outputs"].append({"agent": "michael", "content": michael_reply})
+
+    # If there is exactly one additional worker, have them respond as well
+    worker_ids = [p for p in participants if p != "michael"]
+    if len(worker_ids) == 1:
+        worker_id = worker_ids[0]
+        worker = get_worker(worker_id)
+        if worker:
+            is_first_worker_reply = not any(
+                isinstance(m, AIMessage)
+                and m.additional_kwargs.get("agent") == worker_id
+                for m in history
+            )
+            worker_result = worker_chat(
+                history,
+                worker["system_prompt"],
+                worker.get("personality_prompt", ""),
+                is_first_worker_reply,
+            )
+            worker_reply = worker_result["message"]
+            history.append(
+                AIMessage(
+                    content=worker_reply, additional_kwargs={"agent": worker_id}
+                )
+            )
+            state["outputs"].append({"agent": worker_id, "content": worker_reply})
+
+    state["history"] = history
+    return state
+
+
+def _meeting_graph(state: ChatState) -> ChatState:
+    """
+    Simple meeting-style graph: Michael responds, then each worker participant
+    responds once in order.
+    """
+    _ensure_outputs(state)
+    participants: List[str] = state.get("participants") or []
+    history: List[BaseMessage] = state.get("history", [])
+
+    # Michael opens the meeting
+    manager = get_worker("michael")
+    michael_system = manager["system_prompt"] if manager else ""
+    michael_personality = (manager or {}).get("personality_prompt", "")
+    is_first_reply = not any(
+        isinstance(m, AIMessage) and m.additional_kwargs.get("agent") == "michael"
+        for m in history
+    )
+    michael_result = michael_chat(
+        history,
+        michael_system,
+        michael_personality,
+        is_first_reply,
+    )
+    michael_reply = michael_result["message"]
+    history.append(
+        AIMessage(content=michael_reply, additional_kwargs={"agent": "michael"})
+    )
+    state["outputs"].append({"agent": "michael", "content": michael_reply})
+
+    # Each non-Michael participant takes a turn
+    for pid in participants:
+        if pid == "michael":
+            continue
+        worker = get_worker(pid)
+        if not worker:
+            continue
+        is_first_worker_reply = not any(
+            isinstance(m, AIMessage) and m.additional_kwargs.get("agent") == pid
+            for m in history
+        )
+        worker_result = worker_chat(
+            history,
+            worker["system_prompt"],
+            worker.get("personality_prompt", ""),
+            is_first_worker_reply,
+        )
+        worker_reply = worker_result["message"]
+        history.append(
+            AIMessage(content=worker_reply, additional_kwargs={"agent": pid})
+        )
+        state["outputs"].append({"agent": pid, "content": worker_reply})
+
+    state["history"] = history
     return state
 
