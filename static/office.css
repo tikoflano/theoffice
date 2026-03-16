@@ -1,0 +1,176 @@
+/* Prevent inline baseline gap on the Phaser canvas */
+#office-floor canvas {
+  display: block;
+}
+
+/* ── Context menu ── */
+#ctx-menu {
+  position: fixed;
+  z-index: 100;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  min-width: 150px;
+}
+
+.ctx-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+.ctx-menu-item:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* ── Hire panel chat bubbles ── */
+.hire-msg {
+  max-width: 88%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.hire-msg--you {
+  background: #3b82f6;
+  color: #ffffff;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+
+.hire-msg--toby {
+  background: #f3f4f6;
+  color: #1f2937;
+  border-bottom-left-radius: 4px;
+}
+
+/* ── Candidate cards ── */
+.candidate-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  background: #ffffff;
+  transition: box-shadow 0.15s ease;
+}
+
+.candidate-card:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.candidate-card__btn {
+  display: block;
+  width: 100%;
+  background: #10b981;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.1s ease;
+}
+
+.candidate-card__btn:hover {
+  background: #059669;
+}
+
+/* ── Michael Scott chat panel bubbles ── */
+.michael-msg {
+  max-width: 88%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+.michael-msg--you {
+  background: #3b82f6;
+  color: #ffffff;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+.michael-msg--michael {
+  background: #f3f4f6;
+  color: #1f2937;
+  border-bottom-left-radius: 4px;
+}
+
+/* ── Resizable / fullscreen panels ── */
+#michael-panel,
+#worker-panel,
+#hire-panel {
+  width: 384px;
+}
+
+.panel-resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 10;
+  border-radius: 3px 0 0 3px;
+  transition: background 0.15s;
+}
+
+.panel-resize-handle:hover,
+.panel-resize-handle--active {
+  background: rgba(59, 130, 246, 0.35);
+}
+
+.panel--fullscreen {
+  width: 100% !important;
+  left: 0;
+}
+
+/* ── Markdown content inside agent bubbles ── */
+.msg-content p            { margin-bottom: 0.4em; }
+.msg-content p:last-child  { margin-bottom: 0; }
+.msg-content ul,
+.msg-content ol            { padding-left: 1.25em; margin-bottom: 0.4em; }
+.msg-content li            { margin-bottom: 0.1em; }
+.msg-content code          {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-size: 0.82em;
+  font-family: ui-monospace, monospace;
+}
+.msg-content pre           {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 0.6em 0.9em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 0.5em;
+  font-size: 0.78em;
+}
+.msg-content pre code      { background: none; padding: 0; color: inherit; }
+.msg-content strong        { font-weight: 600; }
+.msg-content em            { font-style: italic; }
+.msg-content h1,
+.msg-content h2,
+.msg-content h3            { font-weight: 600; margin: 0.4em 0 0.2em; }
+.msg-content blockquote    {
+  border-left: 3px solid #d1d5db;
+  padding-left: 0.75em;
+  color: #6b7280;
+  margin-bottom: 0.4em;
+}
+.msg-content a             { color: #3b82f6; text-decoration: underline; }
