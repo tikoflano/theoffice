@@ -39,6 +39,27 @@ michael_sessions: dict[str, list] = {}
 # "{worker_id}:{session_id}" -> list of BaseMessage (direct worker chat history)
 worker_sessions: dict[str, list] = {}
 
+# generic chat session_id -> list of BaseMessage (future unified /chat history)
+chat_sessions: dict[str, list] = {}
+
+
+class ChatRequest(BaseModel):
+    session_id: str
+    participants: list[str]
+    from_id: str
+    action: str
+    message: str
+
+
+class ChatTurn(BaseModel):
+    agent: str
+    content: str
+
+
+class ChatResponse(BaseModel):
+    session_id: str
+    turns: list[ChatTurn]
+
 _log_buffer: collections.deque[str] = collections.deque(maxlen=200)
 
 
@@ -215,6 +236,63 @@ async def logs_page():
         "</body></html>"
     )
     return HTMLResponse(html)
+
+
+# --- Unified chat endpoint (stubbed) ---
+
+
+@web.post("/chat", response_model=ChatResponse)
+async def chat_endpoint(body: ChatRequest):
+    """
+    Generic chat endpoint that will eventually route to LangGraph-based graphs.
+    For now this is a stub that simply echoes a single turn from the first participant.
+    """
+    # Basic validation: must have at least one participant
+    if not body.participants:
+        return JSONResponse(
+            status_code=400, content={"error": "participants list must not be empty"}
+        )
+
+    # Initialize or update generic chat history for this session
+    history = chat_sessions.setdefault(body.session_id, [])
+    history.append(
+        HumanMessage(
+            content=body.message,
+            additional_kwargs={
+                "from_id": body.from_id,
+                "action": body.action,
+                "participants": body.participants,
+            },
+        )
+    )
+
+    # TODO: replace this with a call into LangGraph once graphs are implemented.
+    # For now, just return a single stubbed turn "from" the first participant.
+    first_agent = body.participants[0]
+    reply_text = (
+        f"[stub] {first_agent} received: {body.message} "
+        f"(action={body.action}, from={body.from_id})"
+    )
+
+    history.append(
+        AIMessage(
+            content=reply_text,
+            additional_kwargs={"agent": first_agent},
+        )
+    )
+
+    logger.info(
+        "chat/session=%s participants=%s action=%s from=%s",
+        body.session_id,
+        body.participants,
+        body.action,
+        body.from_id,
+    )
+
+    return ChatResponse(
+        session_id=body.session_id,
+        turns=[ChatTurn(agent=first_agent, content=reply_text)],
+    )
 
 
 # --- Michael endpoints ---
