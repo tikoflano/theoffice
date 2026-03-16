@@ -20,6 +20,7 @@ from app.db import fire_worker as db_fire_worker
 from app.agents.michael import michael_chat
 from app.agents.toby import toby_chat, generate_candidates
 from app.agents.worker import worker_chat
+from app.agent_graphs import run_graph
 
 web = FastAPI()
 web.mount("/static", StaticFiles(directory="static"), name="static")
@@ -266,32 +267,31 @@ async def chat_endpoint(body: ChatRequest):
         )
     )
 
-    # TODO: replace this with a call into LangGraph once graphs are implemented.
-    # For now, just return a single stubbed turn "from" the first participant.
-    first_agent = body.participants[0]
-    reply_text = (
-        f"[stub] {first_agent} received: {body.message} "
-        f"(action={body.action}, from={body.from_id})"
-    )
+    # Run the appropriate graph for this interaction.
+    state = {
+        "history": history,
+        "participants": body.participants,
+        "from_id": body.from_id,
+        "action": body.action,
+        "last_message": body.message,
+    }
 
-    history.append(
-        AIMessage(
-            content=reply_text,
-            additional_kwargs={"agent": first_agent},
-        )
-    )
+    loop = asyncio.get_running_loop()
+    result_state = await loop.run_in_executor(None, lambda: run_graph(body.action, state))
+    outputs = result_state.get("outputs", [])
 
     logger.info(
-        "chat/session=%s participants=%s action=%s from=%s",
+        "chat/session=%s participants=%s action=%s from=%s turns=%d",
         body.session_id,
         body.participants,
         body.action,
         body.from_id,
+        len(outputs),
     )
 
     return ChatResponse(
         session_id=body.session_id,
-        turns=[ChatTurn(agent=first_agent, content=reply_text)],
+        turns=[ChatTurn(agent=o["agent"], content=o["content"]) for o in outputs],
     )
 
 
