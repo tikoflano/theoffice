@@ -51,40 +51,19 @@ Free tier: 30 req/min, 14,400 req/day.
 
 No env vars needed — Ollama is the automatic fallback when no API key is set.
 
-## How a message is processed
+## How conversations work
 
-```
-Browser
-  │
-  │  POST /chat/stream  (message + session_id)
-  ▼
-web.py  ─── appends HumanMessage to in-memory session history
-  │         runs graph in a thread-pool executor
-  │         streams SSE events back to browser as they arrive
-  ▼
-agent.py  ──  LangGraph graph  (two nodes, always run in order)
-  │
-  ├─► supervisor node
-  │     Reads the current worker list from SQLite (db.py).
-  │     If no workers are hired → routes to Manager, done.
-  │     Otherwise calls the LLM once with a strict routing prompt:
-  │       "Output one word: the staff member's name or MANAGER"
-  │     Matches the response against worker names (exact, then substring).
-  │     Emits a `routed` SSE event → browser shows the activity pill.
-  │
-  └─► worker node
-        Builds a system prompt for whoever was selected
-        (the worker's name/role/system_prompt, or the generic Manager prompt).
-        Calls the LLM with the full conversation history.
-        Emits a `working` SSE event, then the final `reply` SSE event.
-        The reply is labelled "Name · Role" or "Office Manager" in the UI.
-```
+- **You talk to Michael first.**
+  - Open the Michael panel (click Michael or use the sidebar).
+  - Send messages to `/michael/chat` with a `michael_session_id`.
+  - Michael responds as the manager, helping you plan and decide what needs to be done.
+- **Michael coordinates the rest of the office.**
+  - He may suggest hiring new staff (via Toby) or delegating work to existing workers.
+  - When you open a direct chat with a worker (by clicking their desk), messages go to `/worker/{id}/greet` and `/worker/{id}/chat` and are handled only by that worker’s prompt.
 
-Both LLM calls go through `llm.py` → the same `BaseChatModel` instance,
-so provider and model are configured once and apply to both steps.
+All LLM calls go through `llm.py` → the same `BaseChatModel` instance, so provider and model are configured once and apply to Michael, Toby, and all workers.
 
-Worker records (name, role, system prompt) are persisted in `office.db` (SQLite).
-Conversation history is kept in memory per session and is lost on server restart.
+Worker records (name, role, system prompt) are persisted in `office.db` (SQLite). Conversation history is kept in memory per session and is lost on server restart.
 
 ## Start the server
 
