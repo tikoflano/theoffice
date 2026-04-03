@@ -12,5 +12,5 @@ run_cmd() {
 }
 
 run_cmd 'curl -LsSf https://astral.sh/uv/install.sh | sh'
-run_cmd 'export PATH="/home/vscode/.local/bin:${PATH}" && cd /workspaces/theoffice && uv sync --python 3.12'
+run_cmd 'export PATH="/home/vscode/.local/bin:${PATH}" && cd /workspaces/theoffice && uv sync --python 3.12 --group dev'
 run_cmd 'export PATH="/home/vscode/.local/bin:${PATH}" && cd /workspaces/theoffice/packages/web && pnpm install'

@@ -1,3 +1,6 @@
+# Local env (secrets / machine-specific)
+.env
+
 # Python
 .venv/
 __pycache__/
@@ -17,6 +20,7 @@ htmlcov/
 node_modules/
 packages/web/dist/
 *.local
+.pnpm-store/
 
 # IDE
 .idea/

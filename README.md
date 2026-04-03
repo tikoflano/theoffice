@@ -22,7 +22,7 @@ Python monorepo (uv) for Strands Agents, Amazon Bedrock AgentCore, a FastAPI BFF
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 cd /path/to/theoffice
-uv sync --python 3.12
+uv sync --python 3.12 --group dev
 ```
 
 Run the BFF:
@@ -36,6 +36,24 @@ Run the CLI:
 ```bash
 uv run --package theoffice-cli theoffice version
 ```
+
+### Custom commands (shell tasks)
+
+[uv](https://docs.astral.sh/uv/) does not define arbitrary shell commands in `pyproject.toml` (only Python entry points via `[project.scripts]`). This repo uses [Poethepoet](https://poethepoet.natn.io/) as a dev dependency so you can name and run shell snippets with `uv run`.
+
+1. Ensure the dev group is installed (`uv sync --python 3.12 --group dev`, as above).
+2. List tasks: `uv run poe --help`
+3. Run a task: `uv run poe <task-name>` (for example `uv run poe ping` polls `/ping` with `curl` and `jq`; override the URL with `PING_URL`).
+
+To add a task, edit the root `pyproject.toml` table `[tool.poe.tasks]`. Use a string for a simple command, or `{ shell = "..." }` when you need pipes, loops, or other shell features:
+
+```toml
+[tool.poe.tasks]
+my-task = "pytest packages/bff/tests"
+watch-logs = { shell = "tail -f /tmp/app.log" }
+```
+
+See the [Poethepoet task reference](https://poethepoet.natn.io/tasks/) for sequences, arguments, `cwd`, and environment options.
 
 ## Web UI (host)
 
@@ -58,7 +76,7 @@ pnpm dev
    - **app**: Python 3.12, uv, Node (LTS), pnpm, AWS CLI; workspace at `/workspaces/theoffice`
    - **ollama**: Ollama on port **11434** (with a persistent volume)
 
-After the container builds, `post-create.sh` runs `uv sync` and `pnpm install` in `packages/web`.
+After the container builds, `post-create.sh` runs `uv sync --group dev` and `pnpm install` in `packages/web`.
 
 Node, pnpm (via Corepack), and the AWS CLI are installed through **`devcontainer.json` features** when you use **Dev Containers: Reopen in Container**. A plain `docker compose build` of only the `Dockerfile` does not apply those features; use the editor command so the full image is built correctly.
 
