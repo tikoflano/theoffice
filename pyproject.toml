@@ -1,0 +1,10 @@
+[project]
+name = "theoffice"
+version = "0.1.0"
+description = "Theoffice monorepo workspace (Python packages)."
+requires-python = ">=3.12"
+readme = "README.md"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["packages/shared", "packages/agents", "packages/cli", "packages/bff"]

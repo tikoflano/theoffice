@@ -1,0 +1,35 @@
+{
+  "name": "theoffice",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/theoffice",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts",
+      "pnpmVersion": "9.15.9"
+    },
+    "ghcr.io/devcontainers/features/aws-cli:1": {}
+  },
+  "forwardPorts": [8000, 5173, 11434],
+  "portsAttributes": {
+    "8000": { "label": "BFF" },
+    "5173": { "label": "Vite" },
+    "11434": { "label": "Ollama" }
+  },
+  "postCreateCommand": "chmod +x .devcontainer/post-create.sh && .devcontainer/post-create.sh",
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "OLLAMA_HOST": "http://ollama:11434"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
+      }
+    }
+  }
+}
