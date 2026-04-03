@@ -5,10 +5,14 @@ description = "Strands agents, Bedrock AgentCore, and Ollama integration."
 requires-python = ">=3.12"
 dependencies = [
     "theoffice-shared",
+    "python-dotenv>=1.0",
     "strands-agents[ollama]",
     "bedrock-agentcore[strands-agents]",
     "strands-agents-tools",
 ]
+
+[project.scripts]
+app = "theoffice_agents.agent_runtime:run"
 
 [tool.uv.sources]
 theoffice-shared = { workspace = true }
