@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -64,8 +65,10 @@ def create_app() -> BedrockAgentCoreApp:
     """Build the AgentCore Starlette app with Strands and lifecycle hooks."""
     app = BedrockAgentCoreApp(lifespan=_lifespan)
 
-    @app.entrypoint
-    def invoke(payload: dict[str, Any], context: RequestContext) -> dict[str, Any]:
+    @app.async_task
+    async def run_invocation(
+        payload: dict[str, Any], context: RequestContext
+    ) -> dict[str, Any]:
         logger.info("Invocation received")
         model = app.state.model
         agent = Agent(
@@ -75,7 +78,13 @@ def create_app() -> BedrockAgentCoreApp:
             callback_handler=null_callback_handler,
         )
         logger.info("Agent created")
-        return _invocation_result(agent, payload, context)
+        return await asyncio.to_thread(_invocation_result, agent, payload, context)
+
+    @app.entrypoint
+    async def invoke(
+        payload: dict[str, Any], context: RequestContext
+    ) -> dict[str, Any]:
+        return await run_invocation(payload, context)
 
     return app
 
