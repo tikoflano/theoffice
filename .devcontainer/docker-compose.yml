@@ -11,12 +11,21 @@ services:
     depends_on:
       - ollama
 
+  # GPU: requires NVIDIA drivers + NVIDIA Container Toolkit (Linux/WSL) or Docker Desktop GPU (Windows/WSL2).
+  # CPU-only: remove the entire `deploy` block below.
   ollama:
     image: ollama/ollama
     ports:
       - "11434:11434"
     volumes:
       - ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
 volumes:
   ollama:
