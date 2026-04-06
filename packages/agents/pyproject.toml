@@ -9,6 +9,13 @@ dependencies = [
     "strands-agents[ollama]",
     "bedrock-agentcore[strands-agents]",
     "strands-agents-tools",
+    "litellm>=1.0",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
 ]
 
 [project.scripts]

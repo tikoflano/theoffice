@@ -19,7 +19,7 @@
   "postCreateCommand": "chmod +x .devcontainer/post-create.sh && .devcontainer/post-create.sh",
   "remoteUser": "vscode",
   "containerEnv": {
-    "OLLAMA_HOST": "http://ollama:11434"
+    "OLLAMA_API_BASE": "http://ollama:11434"
   },
   "customizations": {
     "vscode": {

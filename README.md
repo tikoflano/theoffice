@@ -82,7 +82,7 @@ Node, pnpm (via Corepack), and the AWS CLI are installed through **`devcontainer
 
 ### Environment
 
-- **`OLLAMA_HOST`**: Inside the **app** container, use `http://ollama:11434` (default in `devcontainer.json`). On the host OS, use `http://localhost:11434` if you need to reach Ollama from outside Docker.
+- **`OLLAMA_API_BASE`**: Base URL for the Ollama HTTP API. Inside the **app** container, `http://ollama:11434` is set in `devcontainer.json` / Compose. On the host OS, use `http://localhost:11434` (or the published port) when tools run outside Docker.
 - **AWS**: Configure credentials for Bedrock/AgentCore (for example `aws configure sso` or environment variables). Nothing is baked into the image.
 
 ### Ports (forwarded)
@@ -99,4 +99,4 @@ With the Compose stack running, pull a model inside the Ollama container, for ex
 docker compose -f .devcontainer/docker-compose.yml exec ollama ollama pull llama3.2
 ```
 
-Adjust the model name to match what you configure in Strands (`OllamaModel`).
+Adjust the model name to match your agent registry / `DEFAULT_LLM_MODEL` (e.g. `ollama/llama3.2`).

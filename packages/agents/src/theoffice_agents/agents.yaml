@@ -1,0 +1,7 @@
+agents:
+  - id: local
+    default_model: ollama/qwen3.5:9b
+    system_prompt: You are a concise, helpful assistant.
+  - id: cloud
+    default_model: groq/qwen/qwen3-32b
+    system_prompt: You are a concise, helpful assistant.

@@ -7,10 +7,17 @@ readme = "README.md"
 dependencies = []
 
 [dependency-groups]
-dev = ["poethepoet"]
+dev = [
+    "poethepoet",
+    "pytest",
+    "theoffice-agents",
+]
 
 [tool.poe.tasks]
 ping = { shell = "while true; do clear; curl -s -X GET \"${PING_URL:-http://127.0.0.1:8080/ping}\" | jq; sleep 1; done" }
 
 [tool.uv.workspace]
 members = ["packages/shared", "packages/agents", "packages/cli", "packages/bff"]
+
+[tool.uv.sources]
+theoffice-agents = { workspace = true }
