@@ -70,10 +70,26 @@ def create_app() -> BedrockAgentCoreApp:
         logger.info("Invocation received")
         return await asyncio.to_thread(_run_invocation_sync, app, payload, context)
 
+    async def streaming_invoke(
+        payload: dict[str, Any], context: RequestContext
+    ):
+        task_id = app.add_async_task("invocation_stream")
+        try:
+            service: InvocationService = app.state.service
+            async for item in service.stream_invocation_events(
+                payload,
+                session_id=context.session_id,
+            ):
+                yield item
+        finally:
+            app.complete_async_task(task_id)
+
     @app.entrypoint
     async def invoke(
         payload: dict[str, Any], context: RequestContext
     ) -> dict[str, Any] | JSONResponse:
+        if isinstance(payload, dict) and payload.get("stream"):
+            return streaming_invoke(payload, context)
         return await run_invocation(payload, context)
 
     return app

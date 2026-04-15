@@ -5,7 +5,9 @@ This package hosts **Strands** agents behind **Amazon Bedrock AgentCore**: a Sta
 ## Behavior
 
 - **Agent registry** — Operators define agents in packaged [`agents.yaml`](src/theoffice_agents/agents.yaml) (or override the path with `AGENTS_REGISTRY_PATH`). Each entry has `id`, `system_prompt`, and optional **`default_model`** (logical model id, e.g. `ollama/llama3.2` or `groq/...`).
-- **Invocation body** — Clients send JSON with required **`agent`** (registry id) and **`prompt`**, and optional **`model`** to override the resolved model for that call only.
+- **Invocation body** — Clients send JSON with required **`agent`** (registry id) and **`prompt`**, optional **`model`** to override the resolved model for that call only, and optional **`stream`**: when **`true`**, the HTTP response is **SSE** (`Content-Type: text/event-stream`) instead of a single JSON body (see below).
+- **Thinking vs answer** — The JSON **`response`** field is the user-visible answer only. Chain-of-thought is separated into optional **`thinking`** when the model provides it (Strands **reasoning** blocks and/or **`<think>…</think>` / `<thinking>…</thinking>`** segments inside plain text). The same split appears on the final **`done`** event when streaming.
+- **Streaming (SSE)** — With **`"stream": true`**, each event is one SSE `data:` line containing a JSON object: **`start`** (agent, model), **`delta`** (`phase`: **`thinking`** or **`response`**, **`text`**: incremental chunk), **`done`** (final **`response`**, optional **`thinking`**, **`stop_reason`**, **`agent`**, **`model`**, optional **`session_id`**), or **`error`** (validation/upstream failures; for errors raised before the stream opens, the handler may still return a normal JSON error response—see `bedrock_agentcore` behavior for your client).
 - **Model resolution order** — Effective model id string is, in order: non-empty **`DEFAULT_LLM_MODEL`** env → agent’s **`default_model`** → body **`model`**. Each step overwrites the previous (so **`model` in the body wins** when set).
 - **Provider preflight** — Before invoking the model client, the runtime checks a **curated** set of provider prefixes. If required API keys (or equivalent) are missing, it returns **HTTP 501** with a structured error listing **missing environment variable names** (see below).
 
@@ -62,7 +64,7 @@ uv run pytest packages/agents/tests -q
 
 ### Cursor: invocation smoke test
 
-The repo defines a **Cursor agent** (instructions + script) under [`.cursor/agents/`](../../.cursor/agents/): invoke **`theoffice-agents-invocation-tester`** (see `theoffice-agents-invocation-tester.mdc`) or run:
+The repo defines **Cursor agents** under [`.cursor/agents/`](../../.cursor/agents/): **`software-engineer`** (`software-engineer.mdc`) for full idea-to-validation delivery; **`theoffice-agents-invocation-tester`** (`theoffice-agents-invocation-tester.mdc`) for HTTP smoke tests. For the latter you can also run:
 
 ```bash
 .cursor/agents/test-invocations.sh
